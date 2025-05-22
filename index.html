@@ -1,0 +1,120 @@
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const toggleButton = document.getElementById("toggleButton");
+
+  const dinoImg = new Image();
+  dinoImg.src = "dino.png"; // Ensure this file is in the same folder
+
+  let dino = {
+    x: 50,
+    y: 160,
+    width: 44,
+    height: 47,
+    yVelocity: 0,
+    gravity: 1.5,
+    jumpStrength: -20,
+    onGround: true,
+    frame: 0,
+    frameDelay: 0
+  };
+
+  let cactus = {
+    x: 800,
+    y: 160,
+    width: 20,
+    height: 40
+  };
+
+  let score = 0;
+  let isGameOver = false;
+  let isGoodMode = false;
+
+  function drawDino() {
+    if (isGoodMode) {
+      ctx.save();
+      ctx.shadowColor = "#00ffcc";
+      ctx.shadowBlur = 15;
+    }
+
+    let spriteX = dino.frame * 44;
+    ctx.drawImage(dinoImg, spriteX, 0, 44, 47, dino.x, dino.y, dino.width, dino.height);
+
+    if (isGoodMode) {
+      ctx.restore();
+    }
+
+    dino.frameDelay++;
+    if (dino.onGround && dino.frameDelay > 5) {
+      dino.frame = (dino.frame + 1) % 2;
+      dino.frameDelay = 0;
+    } else if (!dino.onGround) {
+      dino.frame = 0;
+    }
+  }
+
+  function drawCactus() {
+    ctx.fillStyle = "green";
+    ctx.fillRect(cactus.x, cactus.y, cactus.width, cactus.height);
+  }
+
+  function drawScore() {
+    ctx.fillStyle = "black";
+    ctx.font = "18px Arial";
+    ctx.fillText("Score: " + score, 700, 30);
+  }
+
+  function update() {
+    if (isGameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    dino.y += dino.yVelocity;
+    if (dino.y + dino.height >= canvas.height) {
+      dino.y = canvas.height - dino.height;
+      dino.yVelocity = 0;
+      dino.onGround = true;
+    } else {
+      dino.yVelocity += dino.gravity;
+      dino.onGround = false;
+    }
+
+    cactus.x -= 10;
+    if (cactus.x < -cactus.width) {
+      cactus.x = 800 + Math.random() * 200;
+      score++;
+    }
+
+    if (!isGoodMode &&
+        dino.x < cactus.x + cactus.width &&
+        dino.x + dino.width > cactus.x &&
+        dino.y < cactus.y + cactus.height &&
+        dino.y + dino.height > cactus.y) {
+      isGameOver = true;
+      alert("Game Over! Your score: " + score);
+      location.reload();
+    }
+
+    drawDino();
+    drawCactus();
+    drawScore();
+
+    requestAnimationFrame(update);
+  }
+
+  document.addEventListener("keydown", function(e) {
+    if (e.code === "Space" && dino.onGround) {
+      dino.yVelocity = dino.jumpStrength;
+    }
+  });
+
+  toggleButton.addEventListener("click", () => {
+    isGoodMode = !isGoodMode;
+    toggleButton.classList.toggle("active");
+    toggleButton.textContent = isGoodMode ? "Disable Good Mode" : "Enable Good Mode";
+  });
+
+  dinoImg.onload = () => {
+    update();
+  };
+</script>
